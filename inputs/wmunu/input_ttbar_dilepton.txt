@@ -1,3 +1,0 @@
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/top3_select.raw_3Sections_0.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/top3_select.raw_3Sections_1.root
-/eos/user/y/yofeng/LowPU/NTupleModTest/Wmunu/ntuples_0_1/top3_select.raw_3Sections_2.root
