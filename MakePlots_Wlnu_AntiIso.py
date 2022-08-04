@@ -39,7 +39,13 @@ def main():
     # RUN = 323775
     # LUMI = 0.046767743e3
     #RUN = 323778
-    LUMI = 59.74e3
+
+    #RUN = 323778
+    #LUMI = 0.270935867e3
+
+    #LUMI = 59.74e3
+    LUMI = 59.832045316e3
+
     # Update LUMI
     # LUMI = 59.83e3  # nominal
     #lumi_factor = 9.879796e-01
@@ -224,8 +230,9 @@ def main():
     sampMan.DefineAll("met", "met_uncorrected")
 
     #MMET:
-    sampMan.DefineAll("mtCorr", "mt_1")
-    sampMan.DefineAll("ptOmT", "Lep_pt/mtCorr")
+    sampMan.DefineAll("mtCorr", "sqrt(2.*pt_rc_1*met_uncorrected*(1.-cos(phi_1 - metphi_uncorrected)))")
+    #sampMan.DefineAll("mtCorr", "mt_1")
+    sampMan.DefineAll("ptOmT", "pt_rc_1/mtCorr")
 
     #MM:
     #sampMan.DefineAll("mtCorr", "m_vis")
@@ -326,7 +333,7 @@ def main():
     print("Post launch Draw")
 
 
-    hmts_comp = OrderedDict()
+    """hmts_comp = OrderedDict()
     for iso in isobins:
         for wpt in wptbins:
             for lepeta in etabins:
@@ -343,7 +350,7 @@ def main():
                     hmts_comp[strname] = sampMan.hdatas[outputname]
                     hmts_comp[strname].SetName(outputname)
 
-                    """# for MET
+                    # for MET
                     outputname = "histo_wjetsAntiIso_fullrange_met_" + strname
                     hstacked = THStack2TH1(sampMan.hsmcs[outputname])
                     for ibin in xrange(hstacked.GetNbinsX()+1):

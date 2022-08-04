@@ -32,7 +32,7 @@ else:
     #TODO: MORE THAN MT VARIABLE
 
 
-def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix="", extraText="", bincontents_scaled = None, binerrors_scaled = None):
+def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix="", extraText="", bincontents_scaled = None, binerrors_scaled = None):
     """
     extrapolate the QCD shape from a set of control regions (isocenters) to the signal region (isoSR),
     using linear extrapolation and the 2nd order polynomial function
@@ -76,7 +76,12 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
     # legendoptions=["EP", "L", "L", "EP", "EP"]
 
     h_todraws = [graph, f1, graph2]
-    labels = ["{} < mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
+    if variable == "mtcorr":
+        labels = ["{} < mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
+    elif variable == "met":
+        labels = ["{} < MET < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
+    elif variable == "ptOmT":
+        labels = ["{} < pT/mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
     drawoptions = ["P same", "L", "P same"]
     legendoptions=["EP", "L", "EP"]
 
@@ -111,7 +116,7 @@ def ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=
         drawoptions.extend(["P same", "L", "P same"])
         legendoptions.extend(["PE", "L", "PE"])
 
-    DrawHistos( h_todraws, labels, 0, 0.6, "Lepton Relative Isolation", 0.5*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.58], lheader=extraText)
+    DrawHistos( h_todraws, labels, 0, 1.2, "Lepton Relative Isolation", 0.5*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.58], lheader=extraText)
 
     # return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_pol2_par2, err_pol2_par2), (val_scaled_pol1_par1, err_scaled_pol1_par1)
     return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0)
@@ -200,7 +205,7 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
             bincontents_scaled = None
             binerrors_scaled = None
-            results_pol1_par1, results_pol1_par0 = ExpltOneBin(isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
+            results_pol1_par1, results_pol1_par0 = ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
 
             hnew.SetBinContent(ibin, max(results_pol1_par1[0], 0))
             hnew.SetBinError(ibin, 0.) 
@@ -251,13 +256,13 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
         h_pol1_par1.SetLineColor(46)
         h_pol1_par1.SetMarkerColor(46)
-        # h_pol2_par2.Scale(h_pol1_par1.Integral() / h_pol2_par2.Integral())
-        # h_pol2_par2.SetLineColor(9)
-        # h_pol2_par2.SetMarkerColor(9)
-        # h_todraws = [h_pol1_par1, h_pol2_par2]
-        # labels = ["Pol1 Extrapolation", "Pol2 Extrapolation"]
-        h_todraws = [h_pol1_par1]
-        labels = ["Pol1 Extrapolation"]
+        h_pol2_par2.Scale(h_pol1_par1.Integral() / h_pol2_par2.Integral())
+        h_pol2_par2.SetLineColor(9)
+        h_pol2_par2.SetMarkerColor(9)
+        h_todraws = [h_pol1_par1, h_pol2_par2]
+        labels = ["Pol1 Extrapolation", "Pol2 Extrapolation"]
+        # h_todraws = [h_pol1_par1]
+        # labels = ["Pol1 Extrapolation"]
         if fname_scaled:
             h_scaled_pol1_par1.SetLineColor(30)
             h_scaled_pol1_par1.SetMarkerColor(30)
@@ -297,20 +302,26 @@ if __name__ == "__main__":
     isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
     #isobins = ["iso4", "iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
     variables = ["mtcorr", "met", "ptOmT"]
-    number_of_qcd_events = dict()
+    number_of_qcd_events_pos = dict()
+    number_of_qcd_events_neg = dict()
     number_of_qcd_events_normed = dict()
 
     if doMuon:
         fname = "root/output_qcdshape_fullrange_mu_nu.root"
         for variable in variables:
             for wptbin in ["WpT_bin0"]:
-                #oname = "qcdshape_extrapolated_muplus"
                 oname = "qcdshape_extrapolated_muplus_" + variable
                 events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muplus.root", "muplus", variable,wptbin, ["lepEta_bin0"], isobins)
-                number_of_qcd_events[variable] = events
+                number_of_qcd_events_pos[variable] = events
+
+                oname = "qcdshape_extrapolated_muminus_" + variable
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muminus.root", "muminus", variable,wptbin, ["lepEta_bin0"], isobins)
+                number_of_qcd_events_neg[variable] = events
     for variable in variables:
-        number_of_qcd_events_normed[variable] = number_of_qcd_events[variable] / number_of_qcd_events[variables[-1]]
-    print(number_of_qcd_events)
+        number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met"]
+        number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met"]
+    print("Positive: ", number_of_qcd_events_pos)
+    print("Negative: ", number_of_qcd_events_neg)
     print(number_of_qcd_events_normed)
     """if doMuon:
         fname = "root/output_shapesISOTAG_mu.root"
