@@ -26,7 +26,7 @@ doMuon = True
 applyScaling = False
 
 def main():
-    input_base = "inputs_EarlyRun3_V10"
+    input_base = "inputs_EarlyRun3_V12"
     #input_base = "inputs_test"
 
     if not os.path.exists("root"):
@@ -36,23 +36,11 @@ def main():
     #time_init = time.time()
 
     # Test run
-    # RUN = 323775
-    # LUMI = 0.046767743e3
-    #RUN = 323778
-
     #RUN = 323778
     #LUMI = 0.270935867e3
 
     #LUMI = 59.74e3
     LUMI = 59.832045316e3
-
-    # Update LUMI
-    # LUMI = 59.83e3  # nominal
-    #lumi_factor = 9.879796e-01
-    # lumi_factor = 1.
-    # lumi_factor = 1.2
-    # lumi_factor = 0.8
-    #LUMI = LUMI*lumi_factor
 
     # Rochester correction
     ROOT.gInterpreter.ProcessLine('#include "RoccoR/RoccoR.cc"')
@@ -66,7 +54,6 @@ def main():
     ROOT.gROOT.ProcessLine('f_trig_eff->Close();')
 
     if doMuon:
-        #mmet channel
         #input_antiiso_data    = input_base+"/SingleMuon_Run2018D-UL2018/mmet/input_files.txt"
         input_antiiso_data    = input_base+"/SingleMuon_Run2018-UL2018/mmet/input_files.txt"
         input_antiiso_wl0     = input_base+"/WJetsToLNu_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/mmet/input_files.txt"
@@ -76,44 +63,14 @@ def main():
         input_antiiso_ttbar   = input_base+"/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X/mmet/input_files.txt"
         input_antiiso_tbar_1lep = input_base+"/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X/mmet/input_files.txt"
 
-        #mm channel
-        # input_antiiso_data    = input_base+"/SingleMuon_Run2018-UL2018/mm/input_files.txt"
-        # #input_antiiso_wl0     = input_base+"/WJetsToLNu_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/mm/input_files.txt"
-        # #input_antiiso_wl1     = input_base+"/WJetsToLNu_1J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/mm/input_files.txt"
-        # #input_antiiso_wl2     = input_base+"/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/mm/input_files.txt"
-        # input_antiiso_zxx     = input_base+"/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/mm/input_files.txt"
-        # input_antiiso_ttbar   = input_base+"/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X/mm/input_files.txt"
-        # input_antiiso_tbar_1lep = input_base+"/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X/mm/input_files.txt"
-
-        # input_antiiso_data    = "inputs/awmunu/input_data.txt"
-        # input_antiiso_wl0     = "inputs/awmunu/input_wm0.txt"
-        # input_antiiso_wl1     = "inputs/awmunu/input_wm1.txt"
-        # input_antiiso_wl2     = "inputs/awmunu/input_wm2.txt"
-        # input_antiiso_ttbar   = "inputs/awmunu/input_ttbar_dilepton.txt"
-        # input_antiiso_ttbar_1lep = "inputs/awmunu/input_ttbar_singlelepton.txt"
-        # input_antiiso_ttbar_0lep = "inputs/awmunu/input_ttbar_hadronic.txt"
-        # input_antiiso_ww      = "inputs/awmunu/input_ww.txt"
-        # input_antiiso_wz      = "inputs/awmunu/input_wz.txt"
-        # input_antiiso_zz      = "inputs/awmunu/input_zz.txt"
-        # input_antiiso_zxx     = "inputs/awmunu/input_zxx.txt"
-        # input_antiiso_wx0     = "inputs/awmunu/input_wx0.txt"
-        # input_antiiso_wx1     = "inputs/awmunu/input_wx1.txt"
-        # input_antiiso_wx2     = "inputs/awmunu/input_wx2.txt"
     else:
-        input_antiiso_data    = "inputs/awenu/input_data.txt"
-        input_antiiso_wl0     = "inputs/awenu/input_we0.txt"
-        input_antiiso_wl1     = "inputs/awenu/input_we1.txt"
-        input_antiiso_wl2     = "inputs/awenu/input_we2.txt"
-        input_antiiso_ttbar   = "inputs/awenu/input_ttbar_dilepton.txt"
-        input_antiiso_ttbar_1lep = "inputs/awenu/input_ttbar_singlelepton.txt"
-        input_antiiso_ttbar_0lep = "inputs/awenu/input_ttbar_hadronic.txt"
-        input_antiiso_ww      = "inputs/awenu/input_ww.txt"
-        input_antiiso_wz      = "inputs/awenu/input_wz.txt"
-        input_antiiso_zz      = "inputs/awenu/input_zz.txt"
-        input_antiiso_zxx     = "inputs/awenu/input_zxx.txt"
-        input_antiiso_wx0     = "inputs/awenu/input_wx0.txt"
-        input_antiiso_wx1     = "inputs/awenu/input_wx1.txt"
-        input_antiiso_wx2     = "inputs/awenu/input_wx2.txt"
+        input_antiiso_data    = input_base+"/EGamma_Run2018-UL2018/emet/input_files.txt"
+        input_antiiso_wl0     = input_base+"/WJetsToLNu_0J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/emet/input_files.txt"
+        input_antiiso_wl1     = input_base+"/WJetsToLNu_1J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/emet/input_files.txt"
+        input_antiiso_wl2     = input_base+"/WJetsToLNu_2J_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/emet/input_files.txt"
+        input_antiiso_zxx     = input_base+"/DYJetsToLL_M-50_TuneCP5_13TeV-amcatnloFXFX-pythia8_RunIISummer20UL18NanoAODv9-106X/emet/input_files.txt"
+        input_antiiso_ttbar   = input_base+"/TTTo2L2Nu_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X/emet/input_files.txt"
+        input_antiiso_tbar_1lep = input_base+"/TTToSemiLeptonic_TuneCP5_13TeV-powheg-pythia8_RunIISummer20UL18NanoAODv9-106X/emet/input_files.txt"
 
     ## for the QCD background estimation (data-driven)
     qcdnorm = 1.0
@@ -131,47 +88,18 @@ def main():
     # ttbar
     TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
     TT1LepAisoSamp = Sample(input_antiiso_tbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
-    #TT0LepAisoSamp = Sample(input_antiiso_ttbar_0lep, isMC=True, name = "ttbar_0lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    
-    ## dibosons
-    #WWAisoSamp = Sample(input_antiiso_ww, isMC=True, name = "WW_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    #WZAisoSamp = Sample(input_antiiso_wz, isMC=True, name = "WZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    #ZZAisoSamp = Sample(input_antiiso_zz, isMC=True, name = "ZZ_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    
-    # tau
-    #ZXXAisoSamp = Sample(input_antiiso_zxx, isMC=True, name = "ZXX_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
-    #Wx0AisoSamp = Sample(input_antiiso_wx0, isMC=True, name = "wx0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    #Wx1AisoSamp = Sample(input_antiiso_wx1, isMC=True, name = "wx1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
-    #Wx2AisoSamp = Sample(input_antiiso_wx2, isMC=True, name = "wx2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale)
 
-    #sampMan = SampleManager(DataAisoSamp, [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, TT1LepAisoSamp, TT0LepAisoSamp, WWAisoSamp, WZAisoSamp, ZZAisoSamp, ZXXAisoSamp, Wx0AisoSamp, Wx1AisoSamp, Wx2AisoSamp])
-    """sampMan = SampleManager(DataAisoSamp, 
-                                [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, 
-                                TT1LepAisoSamp, ZXXAisoSamp]
-                            )"""
-
-    #FOR MMET
     sampMan = SampleManager(DataAisoSamp, 
                                 [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, 
                                 TT1LepAisoSamp]
                             )
     sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso"], "ttbar", 46, "t#bar{t}")
     sampMan.groupMCs(['wl0_aiso', 'wl1_aiso', 'wl2_aiso'], "wlnu", 92,"W#rightarrow#mu#nu")
-    
-    #FOR MM
-    # sampMan = SampleManager(DataAisoSamp, 
-    #                             [ZXXAisoSamp, TTbarAisoSamp, 
-    #                             TT1LepAisoSamp]
-    #                         )
-    # sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso"], "ttbar", 46, "t#bar{t}")
-    # sampMan.groupMCs(["ZXX_aiso"], "DY", 92, "Z#rightarrow ll")
 
-    #sampMan.groupMCs(["WW_aiso", "WZ_aiso", "ZZ_aiso", "ZXX_aiso", "wx0_aiso", "wx1_aiso", "wx2_aiso"], "EWK", 216, "EWK")
-    #sampMan.groupMCs(["ttbar_dilepton_aiso", "ttbar_1lepton_aiso", "ttbar_0lepton_aiso"], "ttbar", 96, "t#bar{t}")
-    #label = "W#rightarrow#mu#nu" if doMuon else "W#rightarrow e#nu"
-    #sampMan.groupMCs(['wl0_aiso', 'wl1_aiso', 'wl2_aiso'], "wlnu", 92, label)
-
-    sampMan.DefineAll("Lep_pt",     "pt_1")
+    if doMuon:
+        sampMan.DefineAll("Lep_pt",     "pt_rc_1")
+    else:
+        sampMan.DefineAll("Lep_pt",     "pt_1")
     sampMan.DefineAll("Lep_eta",    "eta_1")
     sampMan.DefineAll("Lep_phi",    "phi_1")
     sampMan.DefineAll("Lep_mass",   "mass_1")
@@ -193,24 +121,23 @@ def main():
         sampMan.DefineAll("w_iso11", "(iso_1 > 0.50 && iso_1 < 0.55)")
         sampMan.DefineAll("w_iso12", "(iso_1 > 0.55 && iso_1 < 0.60)")
         sampMan.DefineAll("w_iso13", "(iso_1 > 0.60 && iso_1 < 0.65)")
-
-        """sampMan.DefineAll("w_iso5", "(relIso > 0.20 && relIso < 0.25)")
-        sampMan.DefineAll("w_iso6", "(relIso > 0.25 && relIso < 0.30)")
-        sampMan.DefineAll("w_iso7", "(relIso > 0.30 && relIso < 0.35)")
-        sampMan.DefineAll("w_iso8", "(relIso > 0.35 && relIso < 0.40)")
-        sampMan.DefineAll("w_iso9", "(relIso > 0.40 && relIso < 0.45)")
-        sampMan.DefineAll("w_iso10", "(relIso > 0.45 && relIso < 0.50)")
-        sampMan.DefineAll("w_iso11", "(relIso > 0.50 && relIso < 0.55)")
-        sampMan.DefineAll("w_iso12", "(relIso > 0.55 && relIso < 0.60)")
-        sampMan.DefineAll("w_iso13", "(relIso > 0.60 && relIso < 0.65)")"""
         
         isobins = ["w_iso4", "w_iso5", "w_iso6", "w_iso7", "w_iso8", "w_iso9", "w_iso10", "w_iso11", "w_iso12", "w_iso13"]
     else:
         # separate the EB and EE and correct the electron isolation
         # based on the EB and EE (because of a bug in the code)
-        sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
-        sampMan.DefineAll("RelIso", "isEB ? (relIso + 0.0287 - 0.0478) : (relIso + 0.0445 - 0.0658)")
-        sampMan.DefineAll("w_iso4", "(RelIso > 0.15 && RelIso < 0.20)")
+        #sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
+        #sampMan.DefineAll("RelIso", "isEB ? (iso_1 + 0.0287 - 0.0478) : (iso_2 + 0.0445 - 0.0658)")
+        
+        #Pertending we don't need the above fix
+        sampMan.DefineAll("RelIso", "iso_1")
+        
+        #Signal Region
+        #TODO: Perhaps fix this signal binning? Shouldn't impact on extrapolation
+        sampMan.DefineAll("w_iso4", "(RelIso < 0.15)")
+
+        #Background Region
+        #sampMan.DefineAll("w_iso4", "(RelIso > 0.15 && RelIso < 0.20)")
         sampMan.DefineAll("w_iso5", "(RelIso > 0.20 && RelIso < 0.25)")
         sampMan.DefineAll("w_iso6", "(RelIso > 0.25 && RelIso < 0.30)")
         sampMan.DefineAll("w_iso7", "(RelIso > 0.30 && RelIso < 0.35)")
@@ -218,30 +145,19 @@ def main():
         sampMan.DefineAll("w_iso9", "(RelIso > 0.40 && RelIso < 0.45)")
         sampMan.DefineAll("w_iso10", "(RelIso > 0.45 && RelIso < 0.55)")
         sampMan.DefineAll("w_iso11", "(RelIso > 0.55 && RelIso < 0.70)")
-        isobins = ["iso4", "iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
+        isobins = ["w_iso4", "w_iso5", "w_iso6", "w_iso7", "w_iso8", "w_iso9", "w_iso10", "w_iso11"]
 
-    #sampMan.DefineMC("met_pt", "metVars[1]", excludes=['Data_aiso'])
-    #sampMan.DefineMC("met_phi", "TVector2::Phi_mpi_pi(metVarsPhi[1])", excludes=['Data_aiso'])
-    # Data does not run any recoil corrections
-    #DataAisoSamp.Define("met_pt", "metVars[0]")
-    #DataAisoSamp.Define("met_phi", "TVector2::Phi_mpi_pi(metVarsPhi[0])")
 
     sampMan.DefineAll("met_phi", "metphi_uncorrected")
     sampMan.DefineAll("met", "met_uncorrected")
 
     #MMET:
-    sampMan.DefineAll("mtCorr", "sqrt(2.*pt_rc_1*met_uncorrected*(1.-cos(phi_1 - metphi_uncorrected)))")
-    #sampMan.DefineAll("mtCorr", "mt_1")
-    sampMan.DefineAll("ptOmT", "pt_rc_1/mtCorr")
-
-    #MM:
-    #sampMan.DefineAll("mtCorr", "m_vis")
-    #sampMan.DefineAll("ptOmT", "Lep_pt/m_vis")
-
-    # recoil variables
-    #sampMan.DefineAll("V2W", "UVec(pt_1, phi_1, met_pt, met_phi)")
-    #sampMan.DefineAll("WpT", "V2W.Mod()")
-    #sampMan.DefineAll("Wphi", "TVector2::Phi_mpi_pi(V2W.Phi())")
+    if doMuon:
+        sampMan.DefineAll("mtCorr", "sqrt(2.*pt_rc_1*met_uncorrected*(1.-cos(phi_1 - metphi_uncorrected)))")
+        sampMan.DefineAll("ptOmT", "pt_rc_1/mtCorr")
+    else:
+        sampMan.DefineAll("mtCorr", "sqrt(2.*pt_1*met_uncorrected*(1.-cos(phi_1 - metphi_uncorrected)))")
+        sampMan.DefineAll("ptOmT", "pt_1/mtCorr")
 
     # charge
     lepname = "mu" if doMuon else "e"
@@ -254,13 +170,19 @@ def main():
     sampMan.DefineAll("WpT_bin0",  "Lep_pt>=0.")  #TODO: Changes this generic binning
     wptbins = ["WpT_bin0"]
 
-    # eta bins for electrons: barral and endcap
-    sampMan.DefineAll("lepEta_bin0", "1.0")
-    sampMan.DefineAll("lepEta_bin1", "abs(Lep_eta) <= 1.4442") 
-    sampMan.DefineAll("lepEta_bin2", "abs(Lep_eta) > 1.4442")
+    # eta bin: barral and endcap
+    if doMuon:
+        sampMan.DefineAll("lepEta_bin0", "1.0")
+        sampMan.DefineAll("lepEta_bin1", "abs(Lep_eta) <= 1.2") 
+        sampMan.DefineAll("lepEta_bin2", "abs(Lep_eta) > 1.2")
+    else:
+        sampMan.DefineAll("lepEta_bin0", "1.0")
+        sampMan.DefineAll("lepEta_bin1", "abs(Lep_eta) <= 1.44") 
+        sampMan.DefineAll("lepEta_bin2", "abs(Lep_eta) > 1.57")
 
     if doMuon:
         etabins = ["lepEta_bin0"]
+        #etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
     else:
         etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
 
@@ -283,24 +205,11 @@ def main():
         for wpt in wptbins:
             for lepeta in etabins:
                 for chg in chgbins:
-                    #sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso,  wpt, lepeta), "w_{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
                     sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso,  wpt, lepeta), "{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
-                    #sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta), "w_{} * weight_{} * {} * {}".format(iso, chg, wpt, lepeta))
 
-    nbins = 12*2
+    nbins = 24
     xmin = 0
     xmax = 120
-
-    """print(sampMan.mcs)
-    print("sum of weight_WoVpt for data: ", sampMan.data.rdf.Sum("weight_WoVpt").GetValue())
-    MCSsum = 0
-    for i in range(len(sampMan.mcs)):
-        MCSsum += sampMan.mcs[i].rdf.Sum("weight_WoVpt").GetValue()
-        print(sampMan.mcs[i].rdf.Sum("weight_WoVpt").GetValue())
-    print("sum of weight_WoVpt for mcs : ", MCSsum)
-    print()
-    print()
-    print()"""
 
     for iso in isobins:
         for wpt in wptbins:
@@ -317,12 +226,6 @@ def main():
 
                     outputname = "histo_wjetsAntiIso_fullrange_ptOmT_" + strname 
                     sampMan.cacheDraw("ptOmT", outputname, nbins,  xmin, xmax, DrawConfig(xmin=xmin, xmax=xmax, xlabel="pT / mT [GeV]", dology=True, ymin=1,ymax=1e8, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
-                    #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
-                    #sampMan.cacheDraw("Lep_eta", outputname, 24, -2.4, 2.4, DrawConfig(xmin=-2.4, xmax=2.4, xlabel="Lepton Eta", dology=True, ymax=2e6, donormalizebin=False, addOverflow=False, addUnderflow=False, showratio=True), weightname = strname)
-
-    #cols = ROOT.vector('string')(); cols.push_back("Lep_eta");
-    #d2 = Wl0AisoSamp.rdf.Display(cols)
-    #d2.Print()
 
     strname = "weight_WoVpt"
     outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
@@ -332,60 +235,27 @@ def main():
     sampMan.launchDraw()
     print("Post launch Draw")
 
-
-    """hmts_comp = OrderedDict()
-    for iso in isobins:
-        for wpt in wptbins:
-            for lepeta in etabins:
-                for chg in chgbins:
-                    strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
-                    
-                    # for mT
-                    outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname
-                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    for ibin in xrange(hstacked.GetNbinsX()+1):
-                        # hstacked should always be above 0
-                        hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
-                    sampMan.hdatas[outputname].Add( hstacked, -1.0 )
-                    hmts_comp[strname] = sampMan.hdatas[outputname]
-                    hmts_comp[strname].SetName(outputname)
-
-                    # for MET
-                    outputname = "histo_wjetsAntiIso_fullrange_met_" + strname
-                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    for ibin in xrange(hstacked.GetNbinsX()+1):
-                        # hstacked should always be above 0
-                        hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
-                    sampMan.hdatas[outputname].Add( hstacked, -1.0 )
-                    hmts_comp[strname] = sampMan.hdatas[outputname]
-                    hmts_comp[strname].SetName(outputname)
-
-                    # for ptOmT
-                    outputname = "histo_wjetsAntiIso_fullrange_ptOmT_" + strname
-                    hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    for ibin in xrange(hstacked.GetNbinsX()+1):
-                        # hstacked should always be above 0
-                        hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
-                    sampMan.hdatas[outputname].Add( hstacked, -1.0 )
-                    hmts_comp[strname] = sampMan.hdatas[outputname]
-                    hmts_comp[strname].SetName(outputname)"""
-
-                    ## for lepton eta with mT cuts
-                    #strname += "_mtCut"
-                    #outputname = "histo_wjetsAntiIso_fullrange_lepEta_" + strname
-                    #hstacked = THStack2TH1(sampMan.hsmcs[outputname])
-                    #for ibin in xrange(hstacked.GetNbinsX()+1):
-                    #    # hstacked should always be above 0
-                    #    hstacked.SetBinContent(ibin, max(hstacked.GetBinContent(ibin), 0))
-                    #sampMan.hdatas[outputname].Add( hstacked, -1.0 )
-                    #hetas_mtCut_comp[strname] = sampMan.hdatas[outputname]
-                    #hetas_mtCut_comp[strname].SetName(outputname)
-
     if applyScaling:
         postfix = "nu_applyScaling.root"
     else:
         postfix = "nu.root"
     outfile = ROOT.TFile.Open("root/output_qcdshape_fullrange_"+lepname+"_"+postfix, "recreate")
+
+    print("Computing Iso Mean")
+    iso_mean = sampMan.data.rdf.Filter('iso_1<.15').Mean("iso_1").GetValue()
+    print(240)
+    iso_stat = ROOT.TStatistic("iso_mean")
+    iso_stat.Fill(iso_mean, 1)
+    #meta_tree = ROOT.TTree("meta", "meta")
+    print(242)
+    #meta_branch = meta_tree.Branch("iso_mean", 5)
+    print(244)
+    iso_stat.Write()
+    #meta_tree.SetDirectory(outfile)
+    print(246)
+    #meta_tree.Write()
+    #print("Iso mean = ", iso_mean.GetValue())
+    print(249)
 
     for variable in ["mtcorr", "met", "ptOmT"]:
         hmts_comp = OrderedDict()
@@ -434,86 +304,6 @@ def main():
                         hup.Write()
                         hdown.SetDirectory(odir)
                         hdown.Write()
-
-
-
-    """for wpt in wptbins:
-        odir = outfile.mkdir(wpt)
-        outfile.cd(wpt)
-        for iso in isobins[:-1]:
-            # skip the last iso bin as it is used for the uncertaintiy of the previous iso bin
-            for lepeta in etabins:
-                for chg in chgbins:
-
-                    i = int(iso[5:])
-                    iso_next = "w_iso" + str(i+1)
-                    #strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
-                    #strname_next = "weight_{}_{}_{}_{}".format(chg, iso_next, wpt, lepeta)
-                    strname = "weight_{}_{}_{}_{}".format(chg, iso, wpt, lepeta)
-                    strname_next = "weight_{}_{}_{}_{}".format(chg, iso_next, wpt, lepeta)
-
-                    #mtcorr
-                    outputname = "histo_wjetsAntiIso_fullrange_mtcorr_" + strname
-
-                    hcenter = hmts_comp[strname]
-                    hup = hmts_comp[strname_next].Clone(outputname+"_shapeUp")
-                    hdown = hmts_comp[strname_next].Clone(outputname+"_shapeDown")
-                    hup.Scale(hcenter.Integral() / (hup.Integral()+1e-6))
-                    for ibin in xrange(1, hcenter.GetNbinsX()+1):
-                        center = hcenter.GetBinContent(ibin)
-                        up = hup.GetBinContent(ibin)
-                        hdown.SetBinContent(ibin, max(2*center - up, 0))
-
-                        hcenter.SetBinContent(ibin, max(center, 0))
-                        hup.SetBinContent(ibin, max(up, 0))
-                    hcenter.SetDirectory(odir)
-                    hcenter.Write()
-                    hup.SetDirectory(odir)
-                    hup.Write()
-                    hdown.SetDirectory(odir)
-                    hdown.Write()
-
-                    #met
-                    outputname = "histo_wjetsAntiIso_fullrange_met_" + strname
-
-                    hcenter = hmts_comp[strname]
-                    hup = hmts_comp[strname_next].Clone(outputname+"_shapeUp")
-                    hdown = hmts_comp[strname_next].Clone(outputname+"_shapeDown")
-                    hup.Scale(hcenter.Integral() / (hup.Integral()+1e-6))
-                    for ibin in xrange(1, hcenter.GetNbinsX()+1):
-                        center = hcenter.GetBinContent(ibin)
-                        up = hup.GetBinContent(ibin)
-                        hdown.SetBinContent(ibin, max(2*center - up, 0))
-
-                        hcenter.SetBinContent(ibin, max(center, 0))
-                        hup.SetBinContent(ibin, max(up, 0))
-                    hcenter.SetDirectory(odir)
-                    hcenter.Write()
-                    hup.SetDirectory(odir)
-                    hup.Write()
-                    hdown.SetDirectory(odir)
-                    hdown.Write()
-
-                    #ptOmT
-                    outputname = "histo_wjetsAntiIso_fullrange_ptOmT_" + strname
-
-                    hcenter = hmts_comp[strname]
-                    hup = hmts_comp[strname_next].Clone(outputname+"_shapeUp")
-                    hdown = hmts_comp[strname_next].Clone(outputname+"_shapeDown")
-                    hup.Scale(hcenter.Integral() / (hup.Integral()+1e-6))
-                    for ibin in xrange(1, hcenter.GetNbinsX()+1):
-                        center = hcenter.GetBinContent(ibin)
-                        up = hup.GetBinContent(ibin)
-                        hdown.SetBinContent(ibin, max(2*center - up, 0))
-
-                        hcenter.SetBinContent(ibin, max(center, 0))
-                        hup.SetBinContent(ibin, max(up, 0))
-                    hcenter.SetDirectory(odir)
-                    hcenter.Write()
-                    hup.SetDirectory(odir)
-                    hup.Write()
-                    hdown.SetDirectory(odir)
-                    hdown.Write()"""
 
     outfile.Close()
 

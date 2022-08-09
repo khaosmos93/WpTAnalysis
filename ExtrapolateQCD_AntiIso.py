@@ -3,8 +3,8 @@ import os,sys
 import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
 
-doMuon = True
-doElectron = False
+doMuon = False
+doElectron = True
 doWpT = False
 
 ROOT.gROOT.SetBatch(True)
@@ -137,6 +137,8 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
         os.makedirs("root/QCD")
     ofile = ROOT.TFile.Open("root/QCD/"+oname, "recreate")
 
+    infile = ROOT.TFile.Open(fname)
+
     #ADDED BY JULIUS
     #examples of bins: [w_iso6], [lepEta_bin0], [WpT_bin0]
 
@@ -145,8 +147,10 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
     #TODO: Make sure these are right
     isocuts = [0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65]
     isocenters = [(isocuts[i] + isocuts[i+1])/2 for i in range(len(isocuts)-1)]
-    #isocenters = [0.225, 0.275, 0.320, 0.375, 0.425, 0.475, 0.525, 0.575]
-    isoSR = 0.025 # average isolation value in the signal region
+    
+    isoSR = infile.Get("iso_mean").GetMean()
+    print(isoSR)
+    #isoSR = 0.025 # average isolation value in the signal region
 
     for etabin in etabins:
         histos_norm = dict()
@@ -299,9 +303,12 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
 
 if __name__ == "__main__":
-    isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
-    #isobins = ["iso4", "iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
+    #isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
+    isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10"]
+    lepEtaBins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+    #lepEtaBins = ["lepEta_bin0"]
     variables = ["mtcorr", "met", "ptOmT"]
+
     number_of_qcd_events_pos = dict()
     number_of_qcd_events_neg = dict()
     number_of_qcd_events_normed = dict()
@@ -311,31 +318,45 @@ if __name__ == "__main__":
         for variable in variables:
             for wptbin in ["WpT_bin0"]:
                 oname = "qcdshape_extrapolated_muplus_" + variable
-                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muplus.root", "muplus", variable,wptbin, ["lepEta_bin0"], isobins)
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muplus.root", "muplus", variable,wptbin, lepEtaBins, isobins)
                 number_of_qcd_events_pos[variable] = events
 
                 oname = "qcdshape_extrapolated_muminus_" + variable
-                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muminus.root", "muminus", variable,wptbin, ["lepEta_bin0"], isobins)
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muminus.root", "muminus", variable,wptbin, lepEtaBins, isobins)
                 number_of_qcd_events_neg[variable] = events
-    for variable in variables:
-        number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met"]
-        number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met"]
-    print("Positive: ", number_of_qcd_events_pos)
-    print("Negative: ", number_of_qcd_events_neg)
-    print(number_of_qcd_events_normed)
-    """if doMuon:
-        fname = "root/output_shapesISOTAG_mu.root"
-        for wptbin in ["EarlyRun3_V09"]:
-            oname = "qcdshape_extrapolated_muplus"
-            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "muplus", wptbin, ["lepEta_bin0"])
-            oname = "qcdshape_extrapolated_muminus"
-            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "muminus", wptbin, ["lepEta_bin0"])
+        
+        for variable in variables:
+            number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met"]
+            number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met"]
+        print("Positive: ", number_of_qcd_events_pos)
+        print("Negative: ", number_of_qcd_events_neg)
+        print(number_of_qcd_events_normed)
+
+
     if doElectron:
+        fname = "root/output_qcdshape_fullrange_e_nu.root"
+        for variable in variables:
+            for wptbin in ["WpT_bin0"]:
+                oname = "qcdshape_extrapolated_eplus_" + variable
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_eplus.root", "eplus", variable,wptbin, lepEtaBins, isobins)
+                number_of_qcd_events_pos[variable] = events
+
+                oname = "qcdshape_extrapolated_eminus_" + variable
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_eminus.root", "eminus", variable,wptbin, lepEtaBins, isobins)
+                number_of_qcd_events_neg[variable] = events
+
+        for variable in variables:
+            number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met"]
+            number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met"]
+        print("Positive: ", number_of_qcd_events_pos)
+        print("Negative: ", number_of_qcd_events_neg)
+        print(number_of_qcd_events_normed)
+
+    """if doElectron:
         # on electron channel
         # currently separate barrel and endcap for electrons
         fname = "root/output_qcdshape_fullrange_enu.root"
         oname = "qcdshape_extrapolated_e"
         for wptbin in ["WpT_bin0"]:
             # for electrons, only implement the inclusive version for now
-            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "eplus", wptbin, ["lepEta_bin1", "lepEta_bin2"], fname_scaled = fname.replace(".root", "_applyScaling.root"))
-    """
+            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "eplus", wptbin, ["lepEta_bin1", "lepEta_bin2"], fname_scaled = fname.replace(".root", "_applyScaling.root"))"""
