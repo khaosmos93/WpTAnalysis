@@ -39,51 +39,56 @@ def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTma
     """
     graph = ROOT.TGraphErrors(len(bincontents), np.array(isocenters), np.array(bincontents), np.zeros(len(bincontents)), np.array(binerrors))
     f1 = ROOT.TF1("pol1_"+suffix, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, 0.60)
-    # f2 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [1]*(x-{isoSR}) + [2]".format(isoSR=str(isoSR)), -0.1, 0.60)
+    f2 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [1]*(x-{isoSR}) + [2]".format(isoSR=str(isoSR)), -0.1, 0.60)
     # fit range
     fitmin = 0.25
     fitmax = 0.60
     graph.Fit(f1, "R", "", fitmin, fitmax)
-    # graph.Fit(f2, "R", "", fitmin, fitmax)
+    graph.Fit(f2, "R", "", fitmin, fitmax)
     #print("val at Signal region", f1.Eval(isoSR))
 
     val_pol1_par1 = f1.GetParameter(1)
     err_pol1_par1 = f1.GetParError(1)
     val_pol1_par0 = f1.GetParameter(0)
     err_pol1_par0 = f1.GetParError(0)
-    # val_pol2_par2 = f2.GetParameter(2)
-    # err_pol2_par2 = f2.GetParError(2)
+    val_pol2_par2 = f2.GetParameter(2)
+    err_pol2_par2 = f2.GetParError(2)
     #print("val ", val, " error ", err)
 
     f1.SetLineStyle(2)
     f1.SetLineColor(46)
-    # f2.SetLineStyle(2)
-    # f2.SetLineColor(9)
+    f2.SetLineStyle(2)
+    f2.SetLineColor(9)
 
     graph2 = ROOT.TGraphErrors(1, np.array([isoSR]), np.array([val_pol1_par1]), np.zeros(1), np.array([abs(err_pol1_par1)]))
     graph2.SetMarkerColor(46)
     graph2.SetMarkerStyle(47)
     graph2.SetMarkerSize(2)
 
-    # graph3 = ROOT.TGraphErrors(1, np.array([isoSR]), np.array([val_pol2_par2]), np.zeros(1), np.array([abs(err_pol2_par2)]))
-    # graph3.SetMarkerColor(9)
-    # graph3.SetMarkerStyle(45)
-    # graph3.SetMarkerSize(2)
+    graph3 = ROOT.TGraphErrors(1, np.array([isoSR]), np.array([val_pol2_par2]), np.zeros(1), np.array([abs(err_pol2_par2)]))
+    graph3.SetMarkerColor(9)
+    graph3.SetMarkerStyle(45)
+    graph3.SetMarkerSize(2)
 
-    # h_todraws = [graph, f1, f2, graph2, graph3]
-    # labels = ["{} < mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol2 Fit", "Pol1 Extrapolation", "Pol2 Extrapolation"]
-    # drawoptions = ["P same", "L", "L", "P same", "P same"]
-    # legendoptions=["EP", "L", "L", "EP", "EP"]
-
-    h_todraws = [graph, f1, graph2]
+    h_todraws = [graph, f1, f2, graph2, graph3]
     if variable == "mtcorr":
         labels = ["{} < mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
     elif variable == "met":
         labels = ["{} < MET < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
     elif variable == "ptOmT":
         labels = ["{} < pT/mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
-    drawoptions = ["P same", "L", "P same"]
-    legendoptions=["EP", "L", "EP"]
+    drawoptions = ["P same", "L", "L", "P same", "P same"]
+    legendoptions=["EP", "L", "L", "EP", "EP"]
+
+    # h_todraws = [graph, f1, graph2]
+    # if variable == "mtcorr":
+    #     labels = ["{} < mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
+    # elif variable == "met":
+    #     labels = ["{} < MET < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
+    # elif variable == "ptOmT":
+    #     labels = ["{} < pT/mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
+    # drawoptions = ["P same", "L", "P same"]
+    # legendoptions=["EP", "L", "EP"]
 
     val_scaled_pol1_par1 = None
     err_scaled_pol1_par1 = None
@@ -118,7 +123,7 @@ def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTma
 
     DrawHistos( h_todraws, labels, 0, 1.2, "Lepton Relative Isolation", 0.5*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.58], lheader=extraText)
 
-    # return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_pol2_par2, err_pol2_par2), (val_scaled_pol1_par1, err_scaled_pol1_par1)
+    #return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_pol2_par2, err_pol2_par2), (val_scaled_pol1_par1, err_scaled_pol1_par1)
     return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0)
 
 
@@ -305,8 +310,8 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 if __name__ == "__main__":
     #isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
     isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10"]
-    lepEtaBins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
-    #lepEtaBins = ["lepEta_bin0"]
+    #lepEtaBins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+    lepEtaBins = ["lepEta_bin0"]
     variables = ["mtcorr", "met", "ptOmT"]
 
     number_of_qcd_events_pos = dict()
@@ -351,12 +356,3 @@ if __name__ == "__main__":
         print("Positive: ", number_of_qcd_events_pos)
         print("Negative: ", number_of_qcd_events_neg)
         print(number_of_qcd_events_normed)
-
-    """if doElectron:
-        # on electron channel
-        # currently separate barrel and endcap for electrons
-        fname = "root/output_qcdshape_fullrange_enu.root"
-        oname = "qcdshape_extrapolated_e"
-        for wptbin in ["WpT_bin0"]:
-            # for electrons, only implement the inclusive version for now
-            ExtrapolateQCD(fname, oname+"_"+wptbin+".root", "eplus", wptbin, ["lepEta_bin1", "lepEta_bin2"], fname_scaled = fname.replace(".root", "_applyScaling.root"))"""

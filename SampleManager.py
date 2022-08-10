@@ -11,21 +11,28 @@ import sys
 from collections import OrderedDict
 from CMSPLOTS.myFunction import DrawHistos
 
+# LUMI = 59.7e3  # Run2018, /pb
+# LUMI = 31.75e3  # Run2018D, /pb
+# LUMI = 31.75e3 * 1.2  # check fits
+
 MINMASS = 60
 MAXMASS = 120
-LEPPTMIN = 25.0
-LEPETA = 2.4
-#LUMI = 199.27
-LUMI = 200.87
 
-ROOT.ROOT.EnableImplicitMT()
+# MINMT = 40
+
+# LEPPTMIN = 25.0
+# LEPETA = 2.4
+# LUMI = 199.27
+# LUMI = 200.87
+
+# ROOT.ROOT.EnableImplicitMT()
 ROOT.gSystem.Load("Functions_cc.so")
 
 
 class DrawConfig(object):
     """
     try to sync with the arguments in DrawHistos
-    in /afs/cern.ch/work/y/yofeng/public/CMSPLOTS
+    in /work/moh/tools/CMSPLOTS
     """
     def __init__(self, **kwargs):
         self.xmin = kwargs.get('xmin', 0.0)
@@ -33,7 +40,7 @@ class DrawConfig(object):
         self.xlabel = kwargs.get('xlabel', 'p_{T} [GeV]')
 
         self.ymin = kwargs.get('ymin', 0.5)
-        self.ymax = kwargs.get('ymax', 5e5)
+        self.ymax = kwargs.get('ymax', 5e6)
         self.ylabel = kwargs.get('ylabel', 'Events / GeV')
 
         self.dologx = kwargs.get('dologx', False)
@@ -46,10 +53,12 @@ class DrawConfig(object):
 
         self.showratio = kwargs.get('showratio', True)
         self.ratiobase = kwargs.get('ratiobase', 1)
-        #self.yrmin = kwargs.get('yrmin', 0.71)
-        #self.yrmax = kwargs.get('yrmax', 1.29)
-        self.yrmin = kwargs.get('yrmin', 0.86)
-        self.yrmax = kwargs.get('yrmax', 1.14)
+        self.yrmin = kwargs.get('yrmin', 0.51)
+        self.yrmax = kwargs.get('yrmax', 1.49)
+        # self.yrmin = kwargs.get('yrmin', 0.71)
+        # self.yrmax = kwargs.get('yrmax', 1.29)
+        # self.yrmin = kwargs.get('yrmin', 0.86)
+        # self.yrmax = kwargs.get('yrmax', 1.14)
         self.yrlabel = kwargs.get('yrlabel', 'Data / MC ')
 
         self.legends = kwargs.get('legends', [])
@@ -66,28 +75,36 @@ class DrawConfig(object):
 
 
 class Sample(object):
-    def __init__(self, inputfiles, isMC=True, xsec=1.0, color=1, reweightzpt = False, legend="", name="", 
-                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0):
+    def __init__(self, inputfiles, isMC=True, isMuon=True, xsec=1.0, color=1, reweightzpt = False, legend="", name="", 
+                 isZSR=True, isWSR=False, applySF=True, bjetVeto=False, nmcevt=-1, additionalnorm=1.0, lumi=1.0, run = 1):
+                #  trig_eff_data = None, trig_eff_mc = None):
         if isMC:
             if nmcevt>0:
                 self.nmcevt = nmcevt
             else:
-                self.nmcevt = self.getNMCEvt(inputfiles)
+                self.nmcevt = 1.  # HERE tmp
+                # self.nmcevt = self.getNMCEvt(inputfiles)
             self.nmcevt = self.nmcevt
             self.mcxsec = xsec
             self.color = color
             #self.normfactor = LUMI * self.mcxsec / self.nmcevt
             self.normfactor = 1.0
             self.reweightzpt = reweightzpt
+            self.lumi = lumi
+            self.run = 1
         else:
             self.nmcevt = 0
             self.mcxsec = 0
             self.color = 1
             self.normfactor = 1.0
             self.reweightzpt = False
+            self.run = run
         self.additionalnorm = additionalnorm
 
+        self.inputfiles = inputfiles
+
         self.isMC = isMC
+        self.isMuon = isMuon
         self.legend = legend
         self.name = name
         #if self.name == "wl0":
@@ -105,8 +122,8 @@ class Sample(object):
         self.renormalize = False
         self.renormalizefactor = 1.0
         self.bjetVeto = bjetVeto
-        self.initRDF(inputfiles)
 
+        self.initRDF(inputfiles)
         self.prepareVars()
         self.select()
 
@@ -116,18 +133,24 @@ class Sample(object):
         # this is a bit weird in ROOT.
         # the tree must be held by some vars, or else it would be 
         # closed after this function and the rdf would crash
-        self.tree = ROOT.TChain("Events")
+        self.tree = ROOT.TChain("ntuple")
+        self.tree_friend = ROOT.TChain("ntuple")
         for line in open( inputfiles, "r"):
             fname = line.rstrip()
             if fname.startswith('#'):
                 continue
-            print fname
+            # print fname
             self.tree.Add( fname )
+            if self.isMC:
+                fname_friend = fname.replace("ntuples","friends/crosssection")
+                self.tree_friend.Add( fname_friend )
+        if self.isMC:
+            self.tree.AddFriend(self.tree_friend)
 
         #self.rdf_org = ROOT.ROOT.RDataFrame( self.tree )
         self.rdf_temp = ROOT.ROOT.RDataFrame( self.tree )
         self.rdf_org = self.rdf_temp.Filter('if(tdfentry_ == 0) {cout << "Running evtloop" << endl; } return true; ')
-        #print self.rdf_org.Count().GetValue()
+        print self.rdf_org.Count().GetValue()
 
     def getNMCEvt(self, inputfiles):
         print "count total number of MC events from:"
@@ -165,22 +188,60 @@ class Sample(object):
         So use rdf_org to hold the pre-selected one.
         """
         if self.isZSR:
-            self.rdf_temp2 = self.rdf_org.Filter("category==1 || category==2 || category==3") \
-                                .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
-                                .Define("Z", "(lep1 + lep2)") \
-                                .Define("ZMass", "Z.M()") \
-                                .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
-                                #.Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
-                                #.Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
-                                #.Filter("lep_n==2")
-                                #.Filter("Z_pt < 40.0")
+            self.rdf_temp3 = self.rdf_org\
+                                .Filter("pt_1>25. && pt_2>25. && abs(eta_1)<2.4 && abs(eta_2)<2.4") \
+                                .Filter("q_1*q_2 < 0") \
+                                .Filter("(trg_single_mu24_1 || trg_single_mu24_2)") \
+                                .Filter("m_vis > {MINMASS} && m_vis < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
+
+            if self.run > 1:
+                self.rdf_temp2 = self.rdf_temp3\
+                    .Filter("(int)run == (int){}".format(self.run))
+            else:
+                self.rdf_temp2 = self.rdf_temp3
+
+            # self.rdf_temp2 = self.rdf_org.Filter("category==1 || category==2 || category==3") \
+            #                     .Filter("abs(lep1.Eta()) < 2.4 && abs(lep2.Eta()) < 2.4") \
+            #                     .Define("Z", "(lep1 + lep2)") \
+            #                     .Define("ZMass", "Z.M()") \
+            #                     .Filter("ZMass > {MINMASS} && ZMass < {MAXMASS}".format(MINMASS=MINMASS, MAXMASS=MAXMASS))
+            #                     #.Filter("Muon.pt[0] > {} && Muon.pt[1] > {}".format(LEPPTMIN, LEPPTMIN))  \
+            #                     #.Filter("abs(Muon.eta[0]) < {} && abs(Muon.eta[1]) < {}".format(LEPETA, LEPETA))
+            #                     #.Filter("lep_n==2")
+            #                     #.Filter("Z_pt < 40.0")
             if self.bjetVeto:
-                self.rdf = self.rdf_temp2.Filter("jet_CSVLoose_n<1")
+                pass
+                # self.rdf = self.rdf_temp2.Filter("jet_CSVLoose_n<1")
             else:
                 self.rdf = self.rdf_temp2
         elif self.isWSR:
-            self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
-                                   .Filter("lep.Pt()>25.0")
+            if self.isMuon:
+                self.rdf_temp3 = self.rdf_org\
+                                    .Filter("pt_1>25. && abs(eta_1)<2.4") \
+                                    .Filter("trg_single_mu24_1") \
+                                    .Filter("extramuon_veto")
+            else:
+                self.rdf_temp3 = self.rdf_org\
+                                    .Filter("pt_1>33. && abs(eta_1)<2.4") \
+                                    .Filter("extraelec_veto==1") \
+                                    .Filter("(trg_single_ele32_1)") \
+                                    .Filter("((abs(eta_1 + deltaetaSC_1) < 1.44) || (1.57 < abs(eta_1 + deltaetaSC_1) < 2.5))")
+                                    #.Filter("trg_single_ele27_1") \
+
+            if self.run > 1:
+                self.rdf_temp2 = self.rdf_temp3\
+                    .Filter("(int)run == (int){}".format(self.run))
+            else:
+                self.rdf_temp2 = self.rdf_temp3
+
+            if self.bjetVeto:
+                pass
+                # self.rdf = self.rdf_temp2.Filter("jet_CSVLoose_n<1")
+            else:
+                self.rdf = self.rdf_temp2
+
+            # self.rdf = self.rdf_org.Filter("abs(lep.Eta())<2.4") \
+            #                        .Filter("lep.Pt()>25.0")
         else:
             self.rdf = self.rdf_org
         #print self.rdf.Count().GetValue()
@@ -196,17 +257,48 @@ class Sample(object):
 
     def prepareVars(self):
         # define weight
+
+        if self.isMC:
+            if self.isZSR:
+                self.rdf_org = self.rdf_org\
+                    .Define("normWeight", "genweight*sumwWeight*crossSectionPerEventWeight")\
+                    .Define("idweight", "id_wgt_mu_1*id_wgt_mu_2")\
+                    .Define("isoweight", "iso_wgt_mu_1*iso_wgt_mu_2")\
+                    .Define("lumiweight", str(self.lumi))\
+                    .Define("weight_WoVpt_noTrigWeight", "normWeight*puweight*idweight*isoweight*lumiweight")
+                    # .Define("lumiweight", str(LUMI))\
+                    # .Define("puweight", "puweight")\
+            elif self.isWSR:
+                if self.isMuon: 
+                    self.rdf_org = self.rdf_org\
+                        .Define("normWeight", "genweight*sumwWeight*crossSectionPerEventWeight")\
+                        .Define("lumiweight", str(self.lumi))\
+                        .Define("idweight", "id_wgt_mu_1")\
+                        .Define("isoweight", "iso_wgt_mu_1")\
+                        .Define("weight_WoVpt_noTrigWeight", "normWeight*puweight*idweight*isoweight*lumiweight")
+                else:
+                    self.rdf_org = self.rdf_org\
+                        .Define("normWeight", "genweight*sumwWeight*crossSectionPerEventWeight")\
+                        .Define("lumiweight", str(self.lumi))\
+                        .Define("isoweight", "1")\
+                        .Define("idweight", "id_wgt_ele_wpmedium_1")\
+                        .Define("weight_WoVpt_noTrigWeight", "normWeight*puweight*idweight*isoweight*lumiweight")
+
+        else:
+            self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
+
         #if self.isMC and self.applySF:
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight * mu_trigSF * mu_isoSF * mu_trkSF * mu_idSF )")
         #elif self.isMC:
         #    self.rdf_org = self.rdf_org.Define("weight_WoVpt", "( PUWeight * NLOWeight )")
-        if self.isMC:
-            print(str(LUMI/self.nmcevt))
-            self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
-            if self.isWSR or self.isZSR:
-                self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
-        else:
-            self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
+        
+        # if self.isMC:
+        #     print(str(LUMI/self.nmcevt))
+        #     self.rdf_org = self.rdf_org.Define("mcnorm", str(LUMI/self.nmcevt * self.additionalnorm))
+        #     if self.isWSR or self.isZSR:
+        #         self.rdf_org = self.rdf_org.Define("weight_WoVpt", "evtWeight[0] * mcnorm")
+        # else:
+        #     self.rdf_org = self.rdf_org.Define("weight_WoVpt", str(self.additionalnorm))
 
         #if self.isZSR:
         #    pass
@@ -302,7 +394,7 @@ class SampleManager(object):
         self.normfactors = []
         for mc in self.mcs:
             self.normfactors.append( mc.normfactor )
-        print "normalization factors ", self.normfactors
+        # print "normalization factors ", self.normfactors
 
     def initGroups(self):
         # default group information is the same as the sample itself
@@ -344,6 +436,9 @@ class SampleManager(object):
         h_mcs = []
         for imc in xrange(len(self.mcs)):
             mc = self.mcs[imc]
+            #cols = ROOT.vector('string')(); cols.push_back("Lep_eta");
+            #d2 = mc.rdf.Display(cols)
+            #d2.Print()
             h_mcs.append( mc.rdf.Histo1D( (hname+"_mc_"+str(imc), hname, nbins, xmin, xmax), varname, weightname) )
 
         self.to_draw[hname] = (h_data, h_mcs, drawconfigs)
@@ -389,6 +484,9 @@ class SampleManager(object):
 
             if docounting:
                 self.counts.append( h_mcs[imc].Integral(0, h_mcs[imc].GetNbinsX()+1) )
+
+            h_mcs[imc].SetLineColor( self.mcs[imc].color )
+            h_mcs[imc].SetFillColor( self.mcs[imc].color )
     
             groupname = self.mcs[imc].groupname
             if groupname not in hgroupedmcs:
@@ -413,7 +511,7 @@ class SampleManager(object):
             weight = float(ndata-nmc) / hgroupedmcs[group_to_renormalize].Integral(0, hgroupedmcs[group_to_renormalize].GetNbinsX()+1)
             print "Renormalize group for {}, with {} data, {} MC and weight {}".format(group_to_renormalize, ndata, nmc, weight)
             hgroupedmcs[group_to_renormalize].Scale(weight)
-
+        
         hsname = "hs_" + drawconfigs.outputname
         hs_gmc = ROOT.THStack( hsname, hsname)
         for h_gmc in reversed(hgroupedmcs.values()):
@@ -421,10 +519,10 @@ class SampleManager(object):
                 # scale to bin width
                 h_gmc.Scale(1.0, "width")
             hs_gmc.Add( h_gmc )
-
+        
         if not drawconfigs.legends:
             drawconfigs.legends = legends
-
+        
         if drawconfigs.outputname == "test":
             # change default outputname to the histo name
             drawconfigs.outputname = hname
@@ -435,7 +533,6 @@ class SampleManager(object):
         self.hdatas[ drawconfigs.outputname] = h_data
         self.hsmcs[  drawconfigs.outputname] = hs_gmc
         self.hratios[drawconfigs.outputname] = DrawHistos( [h_data, hs_gmc], drawconfigs.legends, drawconfigs.xmin, drawconfigs.xmax, drawconfigs.xlabel, drawconfigs.ymin, drawconfigs.ymax, drawconfigs.ylabel, drawconfigs.outputname, dology=drawconfigs.dology, dologx=drawconfigs.dologx, showratio=drawconfigs.showratio, yrmax = drawconfigs.yrmax, yrmin = drawconfigs.yrmin, yrlabel = drawconfigs.yrlabel, donormalize=drawconfigs.donormalize, ratiobase=drawconfigs.ratiobase, legendPos = drawconfigs.legendPos, redrawihist = drawconfigs.redrawihist, extraText = drawconfigs.extraText, noCMS = drawconfigs.noCMS, addOverflow = drawconfigs.addOverflow, addUnderflow = drawconfigs.addUnderflow, nMaxDigits = drawconfigs.nMaxDigits)
-        
 
     def launchDraw(self):
         """
@@ -443,6 +540,9 @@ class SampleManager(object):
         """
         print "starting drawing"
         for hname, plotinfo in self.to_draw.iteritems():
+            #print("Starting on plot ", hname, " with info ")
+            #print(plotinfo)
+            #print()
             self._DrawPlot( plotinfo[0], plotinfo[1], plotinfo[2], hname)
         self.to_draw.clear()
         print "finished drawing.."

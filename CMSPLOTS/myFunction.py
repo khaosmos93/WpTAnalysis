@@ -1,3 +1,4 @@
+import os, sys
 import ROOT
 from ROOT import TH1F, TCanvas, TPad, Math, TF1, TLegend
 import CMS_lumi
@@ -360,6 +361,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
     else:
         h1.GetXaxis().SetTitle("%s" % xlabel)
 
+    # pad1.cd()
     h1.Draw()
 
     x1_l = 0.92
@@ -413,8 +415,6 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         tmp = [legendoptions for i in xrange(len(myhistos_clone))]
         legendoptions = tmp
 
-    print("legend options ", legendoptions)
-
     ileg = 0
     for idx in xrange(0, len(myhistos_clone)):
         if addOverflow:
@@ -438,11 +438,16 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         if idx >= len(drawoptions):
             drawoptions.append("")
         if idx >= len(legendoptions):
-            legendoptions.append("LE")
+            legendoptions.append("LEP")
         if isinstance(myhistos_clone[idx], ROOT.THStack):
             drawoptions[idx] = 'HIST'
             legendoptions[idx] = "F"
-        myhistos_clone[idx].Draw(drawoptions[idx]+"same")
+        myhistos_clone[idx].Draw(drawoptions[idx]+" same")
+
+        #print "\nHERE"
+        myhistos_clone[idx].Print()
+        # print drawoptions[idx], myhistos_clone[idx].GetMaximum()
+        # print ""
 
         if ileg < len(mylabels):
             # number of labels might be different from number of histograms.
@@ -452,16 +457,22 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 for hist in reversed(hlist):
                     legend.AddEntry(
                         hist, str(mylabels[ileg]), legendoptions[idx])
+                    # HERE
+                    # print "Integral: ", hist.GetName(), hist.Integral()
                     ileg += 1
             else:
                 legend.AddEntry(myhistos_clone[idx], str(
                     mylabels[ileg]), legendoptions[idx])
+                # HERE
+                # print "Integral: ", myhistos_clone[idx].GetName(), myhistos_clone[idx].Integral()
                 ileg += 1
 
-    print("legend options ", legendoptions)
+    print("draw options: ", drawoptions)
+    print("legend options: ", legendoptions)
 
     if redrawihist >= 0:
-        myhistos_clone[redrawihist].Draw(drawoptions[redrawihist]+"same")
+        myhistos_clone[redrawihist].Draw(drawoptions[redrawihist]+" same")
+
 
     iPosX = 0
     plotCMS = True
@@ -482,6 +493,8 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
         frame.Draw()
         if len(mylabels):
             legend.Draw()
+        pad1.RedrawAxis()
+        pad1.Modified()
         pad1.Update()
 
     else:
@@ -591,6 +604,7 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
                 hpull.Draw("HIST same")
 
         pad2.RedrawAxis("G")
+        pad2.Modified()
         pad2.Update()
 
     if npads > 2:
@@ -621,12 +635,25 @@ def DrawHistos(myhistos, mylabels, xmin, xmax, xlabel, ymin, ymax, ylabel, outpu
             hpull.SetLineColor(1)
             hpull.Draw("HIST same")
 
+        pad3.RedrawAxis()
+        pad3.Modified()
         pad3.Update()
 
-    # canvas.Update()
+    canvas.RedrawAxis()
+    canvas.Modified()
+    canvas.Update()
+
     print "save plot to plots/%s.pdf" % outputname
-    #canvas.Print("plots/%s.C"%outputname)
-    canvas.Print("plots/%s.pdf" % outputname)
-    #canvas.Print("plots/%s.png" % outputname)
-    #canvas.Print("plots/%s.root" % outputname)
+    if not os.path.exists("plots/C"):
+        os.makedirs("plots/C")
+    canvas.Print("plots/C/%s.C"%outputname)
+    if not os.path.exists("plots/pdf"):
+        os.makedirs("plots/pdf")
+    canvas.Print("plots/pdf/%s.pdf" % outputname)
+    if not os.path.exists("plots/png"):
+        os.makedirs("plots/png")
+    canvas.Print("plots/png/%s.png" % outputname)
+    if not os.path.exists("plots/root"):
+        os.makedirs("plots/root")
+    canvas.Print("plots/root/%s.root" % outputname)
     return hratios if showratio else None

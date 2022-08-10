@@ -20,7 +20,7 @@ ROOT.ROOT.EnableImplicitMT(32)
 
 # boolean flag to set either muon or electron channel
 # doMuon = False means the electron channel
-doMuon = True
+doMuon = False
 
 # boolean flag. if set to true, scale the MC cross section by 30%
 applyScaling = False
@@ -78,16 +78,16 @@ def main():
     if applyScaling:
         # scale up the MC for 30%
         mcscale = 1.3
-    DataAisoSamp  = Sample(input_antiiso_data, isMC=False, name="Data_aiso", isWSR=True, additionalnorm = qcdnorm, legend = 'QCD', color='226')
+    DataAisoSamp  = Sample(input_antiiso_data, isMC=False, isMuon=doMuon, name="Data_aiso", isWSR=True, additionalnorm = qcdnorm, legend = 'QCD', color='226')
     
     # W -> lnu
-    Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
-    Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
-    Wl2AisoSamp   = Sample(input_antiiso_wl2, isMC=True, name = "wl2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
+    Wl0AisoSamp   = Sample(input_antiiso_wl0, isMC=True, isMuon=doMuon, name = "wl0_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
+    Wl1AisoSamp   = Sample(input_antiiso_wl1, isMC=True, isMuon=doMuon, name = "wl1_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
+    Wl2AisoSamp   = Sample(input_antiiso_wl2, isMC=True, isMuon=doMuon, name = "wl2_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
     
     # ttbar
-    TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
-    TT1LepAisoSamp = Sample(input_antiiso_tbar_1lep, isMC=True, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
+    TTbarAisoSamp  = Sample(input_antiiso_ttbar, isMC=True, isMuon=doMuon, name = "ttbar_dilepton_aiso",     isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
+    TT1LepAisoSamp = Sample(input_antiiso_tbar_1lep, isMC=True, isMuon=doMuon, name = "ttbar_1lepton_aiso", isWSR=True, additionalnorm= qcdnorm * mcscale, lumi=LUMI)
 
     sampMan = SampleManager(DataAisoSamp, 
                                 [Wl0AisoSamp, Wl1AisoSamp, Wl2AisoSamp, TTbarAisoSamp, 
@@ -125,26 +125,21 @@ def main():
         isobins = ["w_iso4", "w_iso5", "w_iso6", "w_iso7", "w_iso8", "w_iso9", "w_iso10", "w_iso11", "w_iso12", "w_iso13"]
     else:
         # separate the EB and EE and correct the electron isolation
-        # based on the EB and EE (because of a bug in the code)
-        #sampMan.DefineAll("isEB",   "fabs(Lep_eta) <= 1.4442")
-        #sampMan.DefineAll("RelIso", "isEB ? (iso_1 + 0.0287 - 0.0478) : (iso_2 + 0.0445 - 0.0658)")
-        
-        #Pertending we don't need the above fix
-        sampMan.DefineAll("RelIso", "iso_1")
+        sampMan.DefineAll("eta_sc", "eta_1+deltaetaSC_1")
+        sampMan.DefineAll("isEB",   "fabs(eta_sc) <= 1.479")
         
         #Signal Region
-        #TODO: Perhaps fix this signal binning? Shouldn't impact on extrapolation
-        sampMan.DefineAll("w_iso4", "(RelIso < 0.15)")
+        #Signal region is defined differently for barrel and endcap
+        sampMan.DefineAll("w_iso4", "isEB ? (iso_1 < 0.0478+0.506/pt_1) : (iso_1 < 0.0658+0.963/pt_1)")
 
         #Background Region
-        #sampMan.DefineAll("w_iso4", "(RelIso > 0.15 && RelIso < 0.20)")
-        sampMan.DefineAll("w_iso5", "(RelIso > 0.20 && RelIso < 0.25)")
-        sampMan.DefineAll("w_iso6", "(RelIso > 0.25 && RelIso < 0.30)")
-        sampMan.DefineAll("w_iso7", "(RelIso > 0.30 && RelIso < 0.35)")
-        sampMan.DefineAll("w_iso8", "(RelIso > 0.35 && RelIso < 0.40)")
-        sampMan.DefineAll("w_iso9", "(RelIso > 0.40 && RelIso < 0.45)")
-        sampMan.DefineAll("w_iso10", "(RelIso > 0.45 && RelIso < 0.55)")
-        sampMan.DefineAll("w_iso11", "(RelIso > 0.55 && RelIso < 0.70)")
+        sampMan.DefineAll("w_iso5", "(iso_1 > 0.20 && iso_1 < 0.25)")
+        sampMan.DefineAll("w_iso6", "(iso_1 > 0.25 && iso_1 < 0.30)")
+        sampMan.DefineAll("w_iso7", "(iso_1 > 0.30 && iso_1 < 0.35)")
+        sampMan.DefineAll("w_iso8", "(iso_1 > 0.35 && iso_1 < 0.40)")
+        sampMan.DefineAll("w_iso9", "(iso_1 > 0.40 && iso_1 < 0.45)")
+        sampMan.DefineAll("w_iso10", "(iso_1 > 0.45 && iso_1 < 0.55)")
+        sampMan.DefineAll("w_iso11", "(iso_1 > 0.55 && iso_1 < 0.70)")
         isobins = ["w_iso4", "w_iso5", "w_iso6", "w_iso7", "w_iso8", "w_iso9", "w_iso10", "w_iso11"]
 
 
@@ -177,14 +172,15 @@ def main():
         sampMan.DefineAll("lepEta_bin2", "abs(Lep_eta) > 1.2")
     else:
         sampMan.DefineAll("lepEta_bin0", "1.0")
-        sampMan.DefineAll("lepEta_bin1", "abs(Lep_eta) <= 1.44") 
-        sampMan.DefineAll("lepEta_bin2", "abs(Lep_eta) > 1.57")
+        sampMan.DefineAll("lepEta_bin1", "abs(eta_sc) <= 1.44") 
+        sampMan.DefineAll("lepEta_bin2", "abs(eta_sc) > 1.57")
 
     if doMuon:
         etabins = ["lepEta_bin0"]
         #etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
     else:
-        etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
+        etabins = ["lepEta_bin0"]
+        #etabins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
 
     sampMan.DefineMC("Lep_trig_eff_data", "h_trig_eff_data->GetBinContent(\
         h_trig_eff_data->GetXaxis()->FindBin(Lep_q),\
@@ -206,6 +202,10 @@ def main():
             for lepeta in etabins:
                 for chg in chgbins:
                     sampMan.DefineAll("weight_{}_{}_{}_{}".format(chg, iso,  wpt, lepeta), "{} * weight_WoVpt * {} * {} * {}".format(iso, wpt, lepeta, chg))
+
+    #print("sum of weight_WoVpt for data: ", sampMan.data.rdf.Sum("weight_WoVpt").GetValue())
+    #print("Number of entries for data: ", sampMan.data.rdf.Count().GetValue())
+    #return
 
     nbins = 24
     xmin = 0

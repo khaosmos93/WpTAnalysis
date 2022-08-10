@@ -15,29 +15,31 @@ base_path_dummy = "/ceph/moh/CROWN_samples/NTUPLE_VERSION/ntuples/2018/"
     "EarlyRun3_V09_CutMuonIso0p60To1p00",
 ]"""
 
-ntuple_dirs = [
-    "EarlyRun3_V10",
-    "EarlyRun3_V10_CutMuonIso0p15To0p20",
-    "EarlyRun3_V10_CutMuonIso0p20To0p25",
-    "EarlyRun3_V10_CutMuonIso0p25To0p30",
-    "EarlyRun3_V10_CutMuonIso0p30To0p35",
-    "EarlyRun3_V10_CutMuonIso0p35To0p40",
-    "EarlyRun3_V10_CutMuonIso0p40To0p45",
-    "EarlyRun3_V10_CutMuonIso0p45To0p50",
-    "EarlyRun3_V10_CutMuonIso0p50To0p55",
-    "EarlyRun3_V10_CutMuonIso0p55To0p60",
-    "EarlyRun3_V10_CutMuonIso0p60To1p00",
-]
+# ntuple_dirs = [
+#     "EarlyRun3_V10",
+#     "EarlyRun3_V10_CutMuonIso0p15To0p20",
+#     "EarlyRun3_V10_CutMuonIso0p20To0p25",
+#     "EarlyRun3_V10_CutMuonIso0p25To0p30",
+#     "EarlyRun3_V10_CutMuonIso0p30To0p35",
+#     "EarlyRun3_V10_CutMuonIso0p35To0p40",
+#     "EarlyRun3_V10_CutMuonIso0p40To0p45",
+#     "EarlyRun3_V10_CutMuonIso0p45To0p50",
+#     "EarlyRun3_V10_CutMuonIso0p50To0p55",
+#     "EarlyRun3_V10_CutMuonIso0p55To0p60",
+#     "EarlyRun3_V10_CutMuonIso0p60To1p00",
+# ]
+
+ntuple_dirs = ["EarlyRun3_V12"]
 
 channels = [
     "mm",
     "mmet",
-    # "ee",
-    # "emet",
+    "ee",
+    "emet",
 ]
 
 samples = [
-    # "EGamma_Run2018*-UL2018",
+    "EGamma_Run2018*-UL2018",
     "SingleMuon_Run2018*-UL2018",
 
     #"SingleMuon_Run2018D-UL2018",
