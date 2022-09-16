@@ -1,10 +1,11 @@
+#from winreg import HKEY_DYN_DATA
 import ROOT
 import os,sys
 import numpy as np
 from CMSPLOTS.myFunction import DrawHistos
 
-doMuon = False
-doElectron = True
+doMuon = True
+doElectron = False
 doWpT = False
 
 ROOT.gROOT.SetBatch(True)
@@ -13,17 +14,17 @@ ROOT.TH2.AddDirectory(ROOT.kFALSE)
 ROOT.TH3.AddDirectory(ROOT.kFALSE)
 
 etaLabels = {
-    "lepEta_bin0": "Full Eta", 
-    "lepEta_bin1": "Barrel", 
-    "lepEta_bin2": "Endcap"
+    "barrel": "Barrel", 
+    "endcap": "Endcap"
 }
+'''
 channelLabels = {
     "muplus":  "W^{+}#rightarrow #mu^{+}#nu",
     "muminus": "W^{-}#rightarrow #mu^{-}#nu",
     "eplus":   "W^{+}#rightarrow e^{+}#nu",
     "eminus":  "W^{-}#rightarrow e^{-}#nu",
 }
-
+'''
 if doWpT:
     wptbins = ["WpT_bin1", "WpT_bin2", "WpT_bin3", "WpT_bin4", "WpT_bin5", "WpT_bin6", "WpT_bin7", "WpT_bin8", "WpT_bin9"]
 else:
@@ -38,15 +39,19 @@ def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTma
     using linear extrapolation and the 2nd order polynomial function
     """
     graph = ROOT.TGraphErrors(len(bincontents), np.array(isocenters), np.array(bincontents), np.zeros(len(bincontents)), np.array(binerrors))
+    f0 = ROOT.TF1("pol0_"+suffix, "[0]", -0.1, 0.60)
     f1 = ROOT.TF1("pol1_"+suffix, "[0]*(x-{}) + [1]".format(str(isoSR)), -0.1, 0.60)
     f2 = ROOT.TF1("pol2_"+suffix, "[0]*(x-{isoSR})*(x-{isoSR}) + [1]*(x-{isoSR}) + [2]".format(isoSR=str(isoSR)), -0.1, 0.60)
     # fit range
     fitmin = 0.25
     fitmax = 0.60
+    graph.Fit(f0, "R", "", fitmin, fitmax)
     graph.Fit(f1, "R", "", fitmin, fitmax)
     graph.Fit(f2, "R", "", fitmin, fitmax)
     #print("val at Signal region", f1.Eval(isoSR))
 
+    val_pol0_par1 = f0.GetParameter(0)
+    err_pol0_par1 = f0.GetParError(0)
     val_pol1_par1 = f1.GetParameter(1)
     err_pol1_par1 = f1.GetParError(1)
     val_pol1_par0 = f1.GetParameter(0)
@@ -55,10 +60,17 @@ def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTma
     err_pol2_par2 = f2.GetParError(2)
     #print("val ", val, " error ", err)
 
+    f0.SetLineStyle(2)
+    f0.SetLineColor(25)
     f1.SetLineStyle(2)
     f1.SetLineColor(46)
     f2.SetLineStyle(2)
     f2.SetLineColor(9)
+
+    graph1 = ROOT.TGraphErrors(1, np.array([isoSR]), np.array([val_pol0_par1]), np.zeros(1), np.array([abs(err_pol0_par1)]))
+    graph1.SetMarkerColor(25)
+    graph1.SetMarkerStyle(47)
+    graph1.SetMarkerSize(2)
 
     graph2 = ROOT.TGraphErrors(1, np.array([isoSR]), np.array([val_pol1_par1]), np.zeros(1), np.array([abs(err_pol1_par1)]))
     graph2.SetMarkerColor(46)
@@ -67,18 +79,18 @@ def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTma
 
     graph3 = ROOT.TGraphErrors(1, np.array([isoSR]), np.array([val_pol2_par2]), np.zeros(1), np.array([abs(err_pol2_par2)]))
     graph3.SetMarkerColor(9)
-    graph3.SetMarkerStyle(45)
+    graph3.SetMarkerStyle(47)
     graph3.SetMarkerSize(2)
 
-    h_todraws = [graph, f1, f2, graph2, graph3]
-    if variable == "mtcorr":
+    h_todraws = [graph, f0, f1, f2, graph1, graph2, graph3]
+    if variable == "mt_corr":
         labels = ["{} < mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
-    elif variable == "met":
+    elif variable == "met_corr":
         labels = ["{} < MET < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
-    elif variable == "ptOmT":
+    elif variable == "ptOverMt_corr":
         labels = ["{} < pT/mT < {}".format(mTmin, mTmax), "Pol1 Fit", "Pol1 Extrapolation"]
-    drawoptions = ["P same", "L", "L", "P same", "P same"]
-    legendoptions=["EP", "L", "L", "EP", "EP"]
+    drawoptions = ["P same", "L", "L", "L", "P same", "P same", "P same"]
+    legendoptions=["EP", "L", "L", "L", "EP", "EP", "EP"]
 
     # h_todraws = [graph, f1, graph2]
     # if variable == "mtcorr":
@@ -121,10 +133,13 @@ def ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTma
         drawoptions.extend(["P same", "L", "P same"])
         legendoptions.extend(["PE", "L", "PE"])
 
-    DrawHistos( h_todraws, labels, 0, 1.2, "Lepton Relative Isolation", 0.5*min(bincontents), 1.25*max(bincontents), "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.58], lheader=extraText)
+    hist_y_min = 0.5*min(min(bincontents), val_pol0_par1,  val_pol1_par1, val_pol2_par2)
+    hist_y_max = 1.25*max(max(bincontents), val_pol0_par1,  val_pol1_par1, val_pol2_par2)
+
+    DrawHistos( h_todraws, labels, 0, 1.2, "Lepton Relative Isolation", hist_y_min, hist_y_max, "Bin Content", "QCDBinContentNorm_"+suffix, dology=False, drawoptions=drawoptions, legendoptions=legendoptions, nMaxDigits=3, legendPos=[0.65, 0.18, 0.88, 0.58], lheader=extraText)
 
     #return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_pol2_par2, err_pol2_par2), (val_scaled_pol1_par1, err_scaled_pol1_par1)
-    return (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0)
+    return (val_pol2_par2, err_pol2_par2), (val_pol1_par1, err_pol1_par1), (val_pol1_par0, err_pol1_par0), (val_pol0_par1, err_pol0_par1)
 
 
 def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fname_scaled=None):
@@ -153,9 +168,8 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
     isocuts = [0.20, 0.25, 0.30, 0.35, 0.40, 0.45, 0.50, 0.55, 0.60, 0.65]
     isocenters = [(isocuts[i] + isocuts[i+1])/2 for i in range(len(isocuts)-1)]
     
-    isoSR = infile.Get("iso_mean").GetMean()
-    print(isoSR)
-    #isoSR = 0.025 # average isolation value in the signal region
+    #isoSR = infile.Get("iso_mean").GetMean()
+    isoSR = 0.025 # average isolation value in the signal region
 
     for etabin in etabins:
         histos_norm = dict()
@@ -164,11 +178,86 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
         fqcd.Print()
 
         for iso in isobins:
+            if doMuon:
+                hname = "data#mmet#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                DY_hname = "DY#mmet-DY#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                W_hname = "W#mmet-W#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                TT_hname = "TT#mmet-TT#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                ST_hname = "ST#mmet-ST#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                VV_hname = "VV#mmet-VV#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                DYtau_hname = "DYtau#mmet-DYtau#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                Wtau_hname = "Wtau#mmet-Wtau#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                print(hname)
+                h = fqcd.Get(hname)
+                h_DY = fqcd.Get(DY_hname)
+                h_W = fqcd.Get(W_hname)
+                h_TT = fqcd.Get(TT_hname)
+                h_ST = fqcd.Get(ST_hname)
+                h_VV = fqcd.Get(VV_hname)
+                h_DYtau = fqcd.Get(DYtau_hname)
+                h_Wtau = fqcd.Get(Wtau_hname)
 
-            hname = "histo_wjetsAntiIso_fullrange_{}_weight_{}_w_{}_{}_{}".format(variable, channel, iso, wptbin, etabin)
-            print(hname)
-            h = fqcd.Get(hname)
-            h.Print()
+                #Combine all MC histograms
+                h_mc_total = h_DY.Clone("h_mc_total")
+                h_mc_total.Add(h_W)
+                h_mc_total.Add(h_TT)
+                h_mc_total.Add(h_ST)
+                h_mc_total.Add(h_VV)
+                h_mc_total.Add(h_DYtau)
+                h_mc_total.Add(h_Wtau)
+
+                # remove negative entries from total MC histogram
+                for ibin in range(0, h_mc_total.GetNbinsX()+2):
+                    h_mc_total.SetBinContent(ibin, max(h_mc_total.GetBinContent(ibin), 0.))
+
+                #Subtract MC contribution from data histogram
+                h.Add(h_mc_total, -1)
+                
+                # remove negative entries after the subtraction
+                for ibin in range(0, h.GetNbinsX()+2):
+                    h.SetBinContent(ibin, max(h.GetBinContent(ibin), 0.))
+        
+                h.Print()
+            elif doElectron:
+                hname = "data#emet#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                DY_hname = "DY#emet-DY#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                W_hname = "W#emet-W#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                TT_hname = "TT#emet-TT#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                ST_hname = "ST#emet-ST#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                VV_hname = "VV#emet-VV#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                DYtau_hname = "DYtau#emet-DYtau#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                Wtau_hname = "Wtau#emet-Wtau#Nominal#{}_{}_{}_{}".format(variable, channel, etabin, iso)
+                print(hname)
+                h = fqcd.Get(hname)
+                h_DY = fqcd.Get(DY_hname)
+                h_W = fqcd.Get(W_hname)
+                h_TT = fqcd.Get(TT_hname)
+                h_ST = fqcd.Get(ST_hname)
+                h_VV = fqcd.Get(VV_hname)
+                h_DYtau = fqcd.Get(DYtau_hname)
+                h_Wtau = fqcd.Get(Wtau_hname)
+
+                #Combine all MC histograms
+                h_mc_total = h_DY.Clone("h_mc_total")
+                h_mc_total.Add(h_W)
+                h_mc_total.Add(h_TT)
+                h_mc_total.Add(h_ST)
+                h_mc_total.Add(h_VV)
+                h_mc_total.Add(h_DYtau)
+                h_mc_total.Add(h_Wtau)
+
+                # remove negative entries from total MC histogram
+                for ibin in range(0, h_mc_total.GetNbinsX()+2):
+                    h_mc_total.SetBinContent(ibin, max(h_mc_total.GetBinContent(ibin), 0.))
+
+                #Subtract MC contribution from data histogram
+                h.Add(h_mc_total, -1)
+                
+                # remove negative entries after the subtraction
+                for ibin in range(0, h.GetNbinsX()+2):
+                    h.SetBinContent(ibin, max(h.GetBinContent(ibin), 0.))
+        
+                h.Print()
 
             # set the overflow and underflow to zero
             h.SetBinContent(0, 0)
@@ -185,6 +274,7 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
         # some histograms to save the trend of function parameter variation as a function of mT
         # mostly for plotting purpose
+        h_pol0_par1 = href.Clone("h_pol0_par1_{}_{}_{}".format(channel, etabin, wptbin)) # interception
         h_pol1_par1 = href.Clone("h_pol1_par1_{}_{}_{}".format(channel, etabin, wptbin)) # interception
         h_pol1_par0 = href.Clone("h_pol1_par0_{}_{}_{}".format(channel, etabin, wptbin)) # slope
         h_pol2_par2 = href.Clone("h_pol2_par2_{}_{}_{}".format(channel, etabin, wptbin)) # interception
@@ -192,6 +282,7 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
         # save the extrapolated shape for HComb
         hnew = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin)
+        #hnew_pol0 = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_Pol0shapeUp")
         hnew_pol2 = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_Pol2shapeUp")
         hnew_scaled = href.Clone("h_QCD_Extrapolated_" + channel + "_" + etabin + "_" + wptbin + "_ScaledMCshapeUp")
 
@@ -209,22 +300,33 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
             mTmin = histos_norm[isomin].GetBinLowEdge(ibin)
             mTmax = histos_norm[isomin].GetBinLowEdge(ibin) + histos_norm[isomin].GetBinWidth(ibin)
+
             suffix = variable + "_" + channel+"_bin_"+str(ibin)+"_"+ etabin+"_"+wptbin
-            extraText = channelLabels[channel] +" "+ etaLabels[etabin]
+            if doMuon and channel == "pos":
+                extraText = "W^{+}#rightarrow #mu^{+}#nu" +" "+ etaLabels[etabin]
+            elif doMuon and channel == "neg":
+                extraText = "W^{-}#rightarrow #mu^{-}#nu" +" "+ etaLabels[etabin]
+            elif not doMuon and channel == "pos":
+                extraText = "W^{+}#rightarrow e^{+}#nu" +" "+ etaLabels[etabin]
+            elif not doMuon and channel == "neg":
+                extraText = "W^{-}#rightarrow e^{-}#nu" +" "+ etaLabels[etabin]
+ 
 
             bincontents_scaled = None
             binerrors_scaled = None
-            results_pol1_par1, results_pol1_par0 = ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
+            results_pol2_par2, results_pol1_par1, results_pol1_par0, results_pol0_par1 = ExpltOneBin(variable, isocenters, bincontents, binerrors, isoSR, mTmin, mTmax, suffix=suffix, extraText=extraText, bincontents_scaled = bincontents_scaled, binerrors_scaled = binerrors_scaled)
 
             hnew.SetBinContent(ibin, max(results_pol1_par1[0], 0))
             hnew.SetBinError(ibin, 0.) 
 
+            h_pol0_par1.SetBinContent(ibin, results_pol0_par1[0])
+            h_pol0_par1.SetBinError(ibin,   results_pol0_par1[1])
             h_pol1_par1.SetBinContent(ibin, results_pol1_par1[0])
             h_pol1_par1.SetBinError(ibin,   results_pol1_par1[1])
             h_pol1_par0.SetBinContent(ibin, results_pol1_par0[0])
             h_pol1_par0.SetBinError(ibin,   results_pol1_par0[1])
-            #h_pol2_par2.SetBinContent(ibin, results_pol2_par2[0])
-            #h_pol2_par2.SetBinError(ibin,   results_pol2_par2[1])
+            h_pol2_par2.SetBinContent(ibin, results_pol2_par2[0])
+            h_pol2_par2.SetBinError(ibin,   results_pol2_par2[1])
 
             vals_pol1_par1.append(results_pol1_par1)
 
@@ -263,13 +365,15 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
             hnew_ups.append(hnew_scaled)
             hnew_downs.append(hnew_scaledDn)
 
+        h_pol0_par1.SetLineColor(25)
+        h_pol0_par1.SetMarkerColor(25)
         h_pol1_par1.SetLineColor(46)
         h_pol1_par1.SetMarkerColor(46)
-        h_pol2_par2.Scale(h_pol1_par1.Integral() / h_pol2_par2.Integral())
+        #h_pol2_par2.Scale(h_pol1_par1.Integral() / h_pol2_par2.Integral())
         h_pol2_par2.SetLineColor(9)
         h_pol2_par2.SetMarkerColor(9)
-        h_todraws = [h_pol1_par1, h_pol2_par2]
-        labels = ["Pol1 Extrapolation", "Pol2 Extrapolation"]
+        h_todraws = [h_pol0_par1, h_pol1_par1, h_pol2_par2]
+        labels = ["Pol0 Extrapolation", "Pol1 Extrapolation", "Pol2 Extrapolation"]
         # h_todraws = [h_pol1_par1]
         # labels = ["Pol1 Extrapolation"]
         if fname_scaled:
@@ -278,12 +382,12 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
             h_todraws.append(h_scaled_pol1_par1)
             labels.append("Scaled MC")
         
-        if variable == "mtcorr":
-            DrawHistos( h_todraws, labels, 0, 120, "m_{T} [GeV]", 0., 1.25*h_pol1_par1.GetMaximum(), "A.U.", "QCDShapeCompare_"+variable + "_" +channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.72, 0.88, 0.88], lheader=extraText)
-        elif variable == "met":
-            DrawHistos( h_todraws, labels, 0, 120, "MET [GeV]", 0., 1.25*h_pol1_par1.GetMaximum(), "A.U.", "QCDShapeCompare_"+variable + "_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.72, 0.88, 0.88], lheader=extraText)
-        elif variable == "ptOmT":
-            DrawHistos( h_todraws, labels, 0, 120, "#frac{p_{T}}{m_{T}} [GeV]", 0., 1.25*h_pol1_par1.GetMaximum(), "A.U.", "QCDShapeCompare_"+variable + "_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.72, 0.88, 0.88], lheader=extraText)
+        if variable == "mt_corr":
+            DrawHistos( h_todraws, labels, 0, 200, "m_{T} [GeV]", 0., 1.25*h_pol1_par1.GetMaximum(), "A.U.", "QCDShapeCompare_"+variable + "_" +channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.72, 0.88, 0.88], lheader=extraText)
+        elif variable == "met_corr":
+            DrawHistos( h_todraws, labels, 0, 200, "MET [GeV]", 0., 1.25*h_pol1_par1.GetMaximum(), "A.U.", "QCDShapeCompare_"+variable + "_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.72, 0.88, 0.88], lheader=extraText)
+        elif variable == "ptOverMt_corr":
+            DrawHistos( h_todraws, labels, 0, 200, "#frac{p_{T}}{m_{T}} [GeV]", 0., 1.25*h_pol1_par1.GetMaximum(), "A.U.", "QCDShapeCompare_"+variable + "_"+channel+"_"+etabin+"_"+wptbin, dology=False, nMaxDigits=3, legendPos=[0.60, 0.72, 0.88, 0.88], lheader=extraText)
 
         #
         # write the variations to the output
@@ -308,51 +412,52 @@ def ExtrapolateQCD(fname, oname, channel, variable, wptbin, etabins, isobins, fn
 
 
 if __name__ == "__main__":
-    #isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
-    isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10"]
+    isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10", "iso11"]
+    #isobins = ["iso5", "iso6", "iso7", "iso8", "iso9", "iso10"]
+    lepEtaBins = ["barrel", "endcap"]
     #lepEtaBins = ["lepEta_bin0", "lepEta_bin1", "lepEta_bin2"]
-    lepEtaBins = ["lepEta_bin0"]
-    variables = ["mtcorr", "met", "ptOmT"]
+    #lepEtaBins = ["lepEta_bin0"]
+    variables = ["mt_corr", "met_corr", "ptOverMt_corr"]
 
     number_of_qcd_events_pos = dict()
     number_of_qcd_events_neg = dict()
     number_of_qcd_events_normed = dict()
 
     if doMuon:
-        fname = "root/output_qcdshape_fullrange_mu_nu.root"
+        fname = "inputs/earlyRun3_2022_mmet_runPlot0_DYWNLO.root" #"earlyRun3_crown_2018_mmet.root"
         for variable in variables:
             for wptbin in ["WpT_bin0"]:
                 oname = "qcdshape_extrapolated_muplus_" + variable
-                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muplus.root", "muplus", variable,wptbin, lepEtaBins, isobins)
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muplus.root", "pos", variable, wptbin, lepEtaBins, isobins)
                 number_of_qcd_events_pos[variable] = events
 
                 oname = "qcdshape_extrapolated_muminus_" + variable
-                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muminus.root", "muminus", variable,wptbin, lepEtaBins, isobins)
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_muminus.root", "neg", variable, wptbin, lepEtaBins, isobins)
                 number_of_qcd_events_neg[variable] = events
         
         for variable in variables:
-            number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met"]
-            number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met"]
+            number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met_corr"]
+            number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met_corr"]
         print("Positive: ", number_of_qcd_events_pos)
         print("Negative: ", number_of_qcd_events_neg)
         print(number_of_qcd_events_normed)
 
 
     if doElectron:
-        fname = "root/output_qcdshape_fullrange_e_nu.root"
+        fname = "/work/dseyler/WpTAnalysis/WpTAnalysis/earlyRun3_2022_emet_runPlot0_DYWLO.root" #"earlyRun3_crown_2018_emet.root"
         for variable in variables:
             for wptbin in ["WpT_bin0"]:
                 oname = "qcdshape_extrapolated_eplus_" + variable
-                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_eplus.root", "eplus", variable,wptbin, lepEtaBins, isobins)
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_eplus.root", "pos", variable, wptbin, lepEtaBins, isobins)
                 number_of_qcd_events_pos[variable] = events
 
                 oname = "qcdshape_extrapolated_eminus_" + variable
-                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_eminus.root", "eminus", variable,wptbin, lepEtaBins, isobins)
+                events = ExtrapolateQCD(fname, oname+"_"+wptbin+"_eminus.root", "neg", variable, wptbin, lepEtaBins, isobins)
                 number_of_qcd_events_neg[variable] = events
 
         for variable in variables:
-            number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met"]
-            number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met"]
+            number_of_qcd_events_normed["{}_pos".format(variable)] = number_of_qcd_events_pos[variable] / number_of_qcd_events_pos["met_corr"]
+            number_of_qcd_events_normed["{}_neg".format(variable)] = number_of_qcd_events_neg[variable] / number_of_qcd_events_pos["met_corr"]
         print("Positive: ", number_of_qcd_events_pos)
         print("Negative: ", number_of_qcd_events_neg)
         print(number_of_qcd_events_normed)
